@@ -1,12 +1,9 @@
 import * as THREE from 'three';
 //Scene
 const scene = new THREE.Scene();
-
 //Object
 const group = new THREE.Group();
-group.position.y = 0.5
-group.scale.y = 2
-group.rotation.y = 1
+
 scene.add(group);
 const cube1 = new THREE.Mesh(
   new THREE.BoxGeometry(1, 1, 1),
@@ -44,4 +41,21 @@ const renderer = new THREE.WebGLRenderer({
   canvas: document.querySelector('canvas.webgl')
 });
 renderer.setSize(sizes.width, sizes.height);
-renderer.render(scene, camera);
+
+//Animation
+const clock = new THREE.Clock();
+const tick = () => {
+  const elapsedTime = clock.getElapsedTime();
+
+
+  group.rotation.y = elapsedTime;
+  cube1.rotation.y += 0.05
+  cube2.rotation.x = elapsedTime;
+
+  cube3.scale.y = 1.5+(Math.sin(elapsedTime));
+  //Renderer
+  renderer.render(scene, camera);
+
+  window.requestAnimationFrame(tick);
+}
+tick();
