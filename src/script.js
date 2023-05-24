@@ -20,9 +20,39 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Sizes
 const sizes = {
-    width: 800,
-    height: 600
+    width: window.innerWidth,
+    height: window.innerHeight,
 }
+window.addEventListener('resize', () => {
+    //update sizes
+    sizes.width = window.innerWidth;
+    sizes.height = window.innerHeight;
+
+    //update sizes
+    camera.aspect = sizes.width / sizes.height;
+    camera.updateProjectionMatrix();
+   // update renderer
+    renderer.setSize(sizes.width, sizes.height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+})
+
+window.addEventListener('dblclick', () => {
+    const fullscreenElement  = document.fullscreenElement || document.webkitFullscreenElement
+    if (!fullscreenElement) {
+        if (canvas.requestFullscreen) {
+            canvas.requestFullscreen();
+        } else if (canvas.webkitRequestFullscreen) {
+            canvas.webkitFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+
+    }
+})
 
 // Scene
 const scene = new THREE.Scene()
@@ -36,9 +66,6 @@ scene.add(mesh)
 
 // Camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height);
-// const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
-// camera.position.x = 2
-// camera.position.y = 2
 camera.position.z = 3;
 camera.lookAt(mesh.position)
 scene.add(camera)
@@ -51,7 +78,8 @@ controls.enableDamping = true;
 const renderer = new THREE.WebGLRenderer({
     canvas,
 })
-renderer.setSize(sizes.width, sizes.height)
+renderer.setSize(sizes.width, sizes.height);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 // Animate
 const clock = new THREE.Clock()
