@@ -1,15 +1,16 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-
-//Cursor
-const cursor = {
-  x: 0,
-  y: 0,
-};
-// window.addEventListener('mousemove', (e) => {
-//   cursor.x = e.clientX / sizes.width -0.5;
-//   cursor.y = e.clientY / sizes.height -0.5;
-// })
+import GUI from 'lil-gui';
+import gsap from 'gsap';
+ /**
+  * Debug controls
+  */
+const gui = new GUI();
+const parameters = {
+    spin: () => {
+        gsap.to(mesh.rotation, { duration: 1, y: mesh.rotation.y + Math.PI * 2})
+    }
+}
 
 /**
  * Base
@@ -64,6 +65,14 @@ const mesh = new THREE.Mesh(
 )
 scene.add(mesh)
 
+//debug
+gui.add(mesh.position, 'y').min(-3).max(3).step(0.01).name('Y position')
+gui.add(mesh, 'visible')
+gui.add(mesh.material, 'wireframe')
+gui.addColor(mesh.material, 'color')
+gui.add(parameters, 'spin');
+
+
 // Camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height);
 camera.position.z = 3;
@@ -88,15 +97,6 @@ const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
 
-    // Update objects
-    // mesh.rotation.y = elapsedTime;
-
-    //Update camera
-    // camera.position.x = Math.sin(cursor.x * Math.PI * 2) * 3;
-    // camera.position.z = Math.cos(cursor.x * Math.PI * 2) * 3;
-    // camera.position.y = -cursor.y * 3;
-    // camera.lookAt(mesh.position);
-    //Update controls
     controls.update();
 
     // Render
