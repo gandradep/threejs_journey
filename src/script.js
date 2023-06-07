@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import GUI from 'lil-gui';
 import gsap from 'gsap';
+
  /**
   * Debug controls
   */
@@ -12,6 +13,37 @@ const parameters = {
     }
 }
 
+/**
+ * textures
+ */
+const loadingManager = new THREE.LoadingManager()
+loadingManager.onStart = () =>
+{
+    console.log('loading started')
+}
+loadingManager.onLoad = () =>
+{
+    console.log('loading finished')
+}
+loadingManager.onProgress = () =>
+{
+    console.log('loading progressing')
+}
+loadingManager.onError = () =>
+{
+    console.log('loading error')
+}
+
+const textureLoader = new THREE.TextureLoader(loadingManager)
+const colorTexture = textureLoader.load('/textures/minecraft.png')
+// colorTexture.repeat.x = 2
+// colorTexture.repeat.y = 2
+// colorTexture.wrapS = THREE.RepeatWrapping
+// colorTexture.wrapT = THREE.MirroredRepeatWrapping
+// colorTexture.offset.x = 0.5
+// colorTexture.rotation = Math.PI * 0.25
+// colorTexture.center.set(0.5, 0.5)
+colorTexture.magFilter = THREE.NearestFilter
 /**
  * Base
  */
@@ -60,10 +92,11 @@ const scene = new THREE.Scene()
 
 // Object
 const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1, 5, 5, 5),
-    new THREE.MeshBasicMaterial({ color: 0xff0000 })
+    new THREE.BoxGeometry(1 , 1, 1),
+    new THREE.MeshBasicMaterial({ map: colorTexture })
 )
 scene.add(mesh)
+console.log(mesh.geometry.attributes.uv)
 
 //debug
 gui.add(mesh.position, 'y').min(-3).max(3).step(0.01).name('Y position')
