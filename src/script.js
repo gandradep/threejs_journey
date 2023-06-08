@@ -1,16 +1,49 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import GUI from 'lil-gui';
+import gsap from 'gsap';
 
-//Cursor
-const cursor = {
-  x: 0,
-  y: 0,
-};
-// window.addEventListener('mousemove', (e) => {
-//   cursor.x = e.clientX / sizes.width -0.5;
-//   cursor.y = e.clientY / sizes.height -0.5;
-// })
+ /**
+  * Debug controls
+  */
+const gui = new GUI();
+const parameters = {
+    spin: () => {
+        gsap.to(mesh.rotation, { duration: 1, y: mesh.rotation.y + Math.PI * 2})
+    }
+}
 
+/**
+ * textures
+ */
+const loadingManager = new THREE.LoadingManager()
+loadingManager.onStart = () =>
+{
+    console.log('loading started')
+}
+loadingManager.onLoad = () =>
+{
+    console.log('loading finished')
+}
+loadingManager.onProgress = () =>
+{
+    console.log('loading progressing')
+}
+loadingManager.onError = () =>
+{
+    console.log('loading error')
+}
+
+const textureLoader = new THREE.TextureLoader(loadingManager)
+const colorTexture = textureLoader.load('/textures/minecraft.png')
+// colorTexture.repeat.x = 2
+// colorTexture.repeat.y = 2
+// colorTexture.wrapS = THREE.RepeatWrapping
+// colorTexture.wrapT = THREE.MirroredRepeatWrapping
+// colorTexture.offset.x = 0.5
+// colorTexture.rotation = Math.PI * 0.25
+// colorTexture.center.set(0.5, 0.5)
+colorTexture.magFilter = THREE.NearestFilter
 /**
  * Base
  */
@@ -59,10 +92,19 @@ const scene = new THREE.Scene()
 
 // Object
 const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1, 5, 5, 5),
-    new THREE.MeshBasicMaterial({ color: 0xff0000 })
+    new THREE.BoxGeometry(1 , 1, 1),
+    new THREE.MeshBasicMaterial({ map: colorTexture })
 )
 scene.add(mesh)
+console.log(mesh.geometry.attributes.uv)
+
+//debug
+gui.add(mesh.position, 'y').min(-3).max(3).step(0.01).name('Y position')
+gui.add(mesh, 'visible')
+gui.add(mesh.material, 'wireframe')
+gui.addColor(mesh.material, 'color')
+gui.add(parameters, 'spin');
+
 
 // Camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height);
@@ -88,15 +130,6 @@ const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
 
-    // Update objects
-    // mesh.rotation.y = elapsedTime;
-
-    //Update camera
-    // camera.position.x = Math.sin(cursor.x * Math.PI * 2) * 3;
-    // camera.position.z = Math.cos(cursor.x * Math.PI * 2) * 3;
-    // camera.position.y = -cursor.y * 3;
-    // camera.lookAt(mesh.position);
-    //Update controls
     controls.update();
 
     // Render
