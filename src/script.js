@@ -7,7 +7,7 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 /**
  * Debug controls
  */
-const gui = new GUI();
+// const gui = new GUI();
 
 // Canvas
 
