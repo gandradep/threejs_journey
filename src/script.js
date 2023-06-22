@@ -26,6 +26,7 @@ const matcapTexture = textureLoader.load('/textures/matcaps/3.png')
 /**
  * Fonts
  */
+let text;
 const fontLoader = new FontLoader();
 fontLoader.load(
     '/fonts/helvetiker_regular.typeface.json',
@@ -54,7 +55,7 @@ fontLoader.load(
 
         const material = new THREE.MeshMatcapMaterial({matcap: matcapTexture})
 
-        const text = new THREE.Mesh( textGeometry, material)
+        text = new THREE.Mesh( textGeometry, material)
         scene.add(text);
         console.time('donuts')
         const donutGeometry = new THREE.TorusGeometry(0.3, 0.3, 20, 45)
@@ -73,8 +74,14 @@ fontLoader.load(
             scene.add(donut);
         }
 
+        const test = () => {
+            console.log('youflow');
+        }
+
     }
 )
+
+
 /**
  * Lights
  */
@@ -129,6 +136,12 @@ const clock = new THREE.Clock()
 
 const tick = () =>
 {
+    const elapsedTime = clock.getElapsedTime()
+
+    // Update objects
+    if(text){
+        text.rotation.y += - 0.01;
+    }
     //update objects
     controls.update();
 
