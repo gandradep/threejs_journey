@@ -32,7 +32,7 @@ fontLoader.load(
     '/fonts/helvetiker_regular.typeface.json',
     (font) => {
         const textGeometry = new TextGeometry(
-            'Soon you will get it',
+            'Un poco de ensalada.',
             {
                 font,
                 size: 0.5,
