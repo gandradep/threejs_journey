@@ -1,13 +1,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import GUI from 'lil-gui';
-import { FontLoader } from 'three/addons/loaders/FontLoader.js';
-import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import { RectAreaLightHelper } from 'three/examples/jsm/helpers/RectAreaLightHelper.js';
+
 
 /**
  * Debug controls
  */
-// const gui = new GUI();
+const gui = new GUI();
 
 // Canvas
 
@@ -15,85 +15,82 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
-
 /**
- * Textures
+ * objects
  */
-const textureLoader = new THREE.TextureLoader();
-const matcapTexture = textureLoader.load('/textures/matcaps/3.png')
-
-
-/**
- * Fonts
- */
-let text;
-const fontLoader = new FontLoader();
-fontLoader.load(
-    '/fonts/helvetiker_regular.typeface.json',
-    (font) => {
-        const textGeometry = new TextGeometry(
-            'Un poco de ensalada.',
-            {
-                font,
-                size: 0.5,
-                height: 0.2,
-                curveSegments: 4,
-                bevelEnabled: true,
-                bevelThickness: 0.03,
-                bevelSize: 0.02,
-                bevelOffset: 0,
-                bevelSegments: 4
-            }
-        )
-        // textGeometry.computeBoundingBox()
-        // textGeometry.translate(
-        //     - (textGeometry.boundingBox.max.x - 0.02) * 0.5,
-        //     - (textGeometry.boundingBox.max.y - 0.02) * 0.5,
-        //     - (textGeometry.boundingBox.max.z - 0.03) * 0.5
-        // )
-        textGeometry.center();
-
-        const material = new THREE.MeshMatcapMaterial({matcap: matcapTexture})
-
-        text = new THREE.Mesh( textGeometry, material)
-        scene.add(text);
-        console.time('donuts')
-        const donutGeometry = new THREE.TorusGeometry(0.3, 0.3, 20, 45)
-        for (let i = 0; i < 100; i++) {
-            const donut = new THREE.Mesh(donutGeometry, material)
-
-
-            donut.position.set((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10)
-
-            donut.rotation.x = Math.random() * Math.PI
-            donut.rotation.y = Math.random() * Math.PI
-
-            let scale = Math.random()
-            donut.scale.set(scale, scale, scale)
-
-            scene.add(donut);
-        }
-
-        const test = () => {
-            console.log('youflow');
-        }
-
-    }
-)
+const material = new THREE.MeshStandardMaterial()
+const sphereGeometry = new THREE.SphereGeometry(0.25, 20, 45)
+const sphere = new THREE.Mesh(sphereGeometry, material)
+const donutGeometry = new THREE.TorusGeometry(0.25, 0.15, 20, 45)
+const donut = new THREE.Mesh(donutGeometry, material)
+const cubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5)
+const cube = new THREE.Mesh(cubeGeometry, material)
+const planeGeometry = new THREE.PlaneGeometry(10, 10)
+const plane = new THREE.Mesh(planeGeometry, material)
+donut.position.x = -1
+sphere.position.x = 1
+plane.rotation.x = -Math.PI / 2
+plane.position.y = -0.6
+scene.add(donut)
+scene.add(sphere)
+scene.add(cube)
+scene.add(plane)
 
 
 /**
  * Lights
  */
-
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
 scene.add(ambientLight)
+gui.add(ambientLight, 'intensity').min(0).max(1).step(0.01)
 
-const pointLight = new THREE.PointLight(0xffffff, 0.5)
-pointLight.position.x = 2;
-pointLight.position.y = 3;
-pointLight.position.z = 4;
+const directionalLight = new THREE.DirectionalLight(0x00ffff, 0.3)
+directionalLight.position.set(0, 1, 0)
+
+
+const hemisphereLight = new THREE.HemisphereLight(0xff0000, 0x0000ff, 0.3)
+
+ //pointlight has decay and distance parameters
+const pointLight = new THREE.PointLight(0xff9000, 0.5)
+pointLight.position.set(1, -0.5, 1)
+gui.add(pointLight.position, 'y').min(-0.5).max(5).step(0.01)
+
+
+const rectAreaLight = new THREE.RectAreaLight(0x4e00ff, 2, 1, 1)
+rectAreaLight.position.set(-1.5, 0, 1.5)
+rectAreaLight.lookAt(new THREE.Vector3())
+gui.add(rectAreaLight, 'intensity').min(0).max(10).step(0.01)
+gui.add(rectAreaLight, 'width').min(0).max(10).step(0.01)
+gui.add(rectAreaLight, 'height').min(0).max(10).step(0.01)
+
+
+const spotLight = new THREE.SpotLight(0x78ff00, 0.5, 10, Math.PI * 0.1, 0.25, 1)
+spotLight.position.set(0, 2, 3)
+
+
+const rectAreaLightHelper = new RectAreaLightHelper(rectAreaLight)
+scene.add(directionalLight)
+scene.add(hemisphereLight)
 scene.add(pointLight)
+scene.add(rectAreaLight)
+scene.add(spotLight)
+scene.add(rectAreaLightHelper)
+
+/**
+ * Light helpers
+ */
+
+const hemisphereLightHelper = new THREE.HemisphereLightHelper(hemisphereLight, 0.1)
+scene.add(hemisphereLightHelper)
+
+const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 0.2)
+scene.add(directionalLightHelper)
+
+const pointLightHelper = new THREE.PointLightHelper(pointLight, 0.2)
+scene.add(pointLightHelper)
+
+const spotLightHelper = new THREE.SpotLightHelper(spotLight)
+scene.add(spotLightHelper)
 // Sizes
 const sizes = {
     width: window.innerWidth,
@@ -138,11 +135,12 @@ const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
 
-    // Update objects
-    if(text){
-        text.rotation.y += - 0.01;
-    }
+
     //update objects
+    donut.rotation.x += 0.01
+    cube.rotation.x += 0.01
+    donut.rotation.y += 0.005
+    cube.rotation.y += 0.005
     controls.update();
 
     // Render
