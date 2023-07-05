@@ -8,63 +8,92 @@ THREE.ColorManagement.enabled = false
  * Base
  */
 // Debug
-// const gui = new GUI()
+const gui = new GUI()
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
-
 // Scene
 const scene = new THREE.Scene()
 
-/**
- * Textures
- */
-const textureLoader = new THREE.TextureLoader()
-const particleTexture = textureLoader.load('/textures/particles/8.png')
+
 
 /**
- * Particles
+ * Galaxy
  */
+const parameters = {}
+parameters.count = 100000
+parameters.size = 0.01
+parameters.radius = 5
+parameters.branches = 3
+parameters.spin = 1
+parameters.randomness = 0.2
+parameters.randomnessPower = 3
+parameters.insideColor = '#ff6030'
+parameters.outsideColor = '#1b3984'
 
-// const particleGeometry = new THREE.SphereGeometry(1, 32, 32)
-const particleGeometry = new THREE.BufferGeometry()
-const count = 5000
+let geometry = null
+let material = null
+let points = null
+const generateGalaxy = () => {
+    if(points !== null){
+        //Frees the GPU-related resources allocated by this instance.
+        geometry.dispose()
+        material.dispose()
+        scene.remove(points)
+    }
+  geometry = new THREE.BufferGeometry()
+  const positions = new Float32Array(parameters.count * 3)
+  const colors = new Float32Array(parameters.count * 3)
 
-const positions = new Float32Array(count * 3)
-const colors = new Float32Array(count * 3)
-for(let i = 0; i<count * 3; i++){
-    positions[i] = (Math.random() - 0.5) * 10
-    colors[i] = Math.random()
+  const insideColor = new THREE.Color(parameters.insideColor)
+  const outsideColor = new THREE.Color(parameters.outsideColor)
+
+  for (let i = 0; i< parameters.count; i++){
+    const i3 = i*3
+    const radius = Math.random() * parameters.radius
+    const spinAngle = radius * parameters.spin
+    const branchAngle = (i % parameters.branches) / parameters.branches * 2 * Math.PI
+
+    const randomX = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1)
+    const randomY = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1)
+    const randomZ = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1)
+
+    positions[i3] = radius * Math.cos(branchAngle + spinAngle) + randomX
+    positions[i3 + 1] = randomY
+    positions[i3 + 2] = radius * Math.sin(branchAngle + spinAngle) + randomZ
+
+    //Color
+    const mixedColor = insideColor.clone()
+    mixedColor.lerp(outsideColor, radius / parameters.radius)
+    colors[i3] = mixedColor.r
+    colors[i3 + 1] = mixedColor.g
+    colors[i3 + 2] = mixedColor.b
+  }
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+  /**Material */
+  material = new THREE.PointsMaterial({
+    size: parameters.size,
+    sizeAttenuation: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    vertexColors: true
+  })
+
+  /**Points */
+  points = new THREE.Points(geometry, material)
+  scene.add(points)
 }
-particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-
-const particleMaterial = new THREE.PointsMaterial({
-    size: 0.1,
-    sizeAttenuation: true, //create perspective from camera
-    color: '#ffff00'
-})
-
-particleMaterial.transparent = true
-particleMaterial.alphaMap = particleTexture
-//alphaTest: material wont be rendered if the opacity is lower than this value.
-// particleMaterial.alphaTest = 0.001
-// particleMaterial.depthTest = false
-particleMaterial.depthWrite = false
-particleMaterial.blending = THREE.AdditiveBlending
-//vertex coloring is used???
-particleMaterial.vertexColors = true
-
-const particles = new THREE.Points(particleGeometry, particleMaterial)
-scene.add(particles)
-
-//cube
-// const cube = new THREE.Mesh(
-//     new THREE.BoxGeometry(),
-//     new THREE.MeshBasicMaterial()
-// )
-// scene.add(cube)
-
+generateGalaxy()
+gui.add(parameters, 'count').min(100).max(1000000).step(100).onFinishChange(generateGalaxy)
+gui.add(parameters, 'size').min(0.001).max(0.1).step(0.001).onFinishChange(generateGalaxy)
+gui.add(parameters, 'radius').min(1).max(20).step(0.1).onFinishChange(generateGalaxy)
+gui.add(parameters, 'branches').min(2).max(10).step(1).onFinishChange(generateGalaxy)
+gui.add(parameters, 'spin').min(-5).max(5).step(0.001).onFinishChange(generateGalaxy)
+gui.add(parameters, 'randomness').min(0).max(2).step(0.001).onFinishChange(generateGalaxy)
+gui.add(parameters, 'randomnessPower').min(1).max(10).step(0.001).onFinishChange(generateGalaxy)
+gui.addColor(parameters, 'insideColor').onFinishChange(generateGalaxy)
+gui.addColor(parameters, 'outsideColor').onFinishChange(generateGalaxy)
 
 /**
  * Sizes
@@ -121,14 +150,7 @@ const tick = () =>
     const elapsedTime = clock.getElapsedTime()
 
     //Update particles
-    // particles.rotation.y = elapsedTime * 0.1
-    // not the best solution to animate
-    for(let i = 0; i < count; i++){
-        const i3 = i * 3
-        const x = particleGeometry.attributes.position.array[i3]
-        particleGeometry.attributes.position.array[i3 + 1] = Math.sin(elapsedTime + x) *2
-    }
-    particleGeometry.attributes.position.needsUpdate = true
+
     // Update controls
     controls.update()
 
