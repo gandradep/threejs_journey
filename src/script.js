@@ -1,15 +1,33 @@
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import GUI from 'lil-gui'
+import * as dat from 'lil-gui'
 
 THREE.ColorManagement.enabled = false
 
 /**
+ * Debug
+ */
+const gui = new dat.GUI()
+
+const parameters = {
+    materialColor: '#ffeded'
+}
+
+gui
+    .addColor(parameters, 'materialColor')
+    .onChange(() =>
+    {
+      material.color.set(parameters.materialColor)
+      particleMaterial.color.set(parameters.materialColor)
+    })
+/**
+ * Textures
+ */
+const textureLoader = new THREE.TextureLoader()
+const gradientTexture = textureLoader.load('textures/gradients/3.jpg')
+gradientTexture.magFilter = THREE.NearestFilter
+/**
  * Base
  */
-// Debug
-// const gui = new GUI()
-
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
@@ -17,55 +35,68 @@ const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
 /**
- * Textures
+ * Objects
  */
-const textureLoader = new THREE.TextureLoader()
-const particleTexture = textureLoader.load('/textures/particles/8.png')
+//material
+const material = new THREE.MeshToonMaterial(
+  {
+    color: parameters.materialColor,
+    gradientMap: gradientTexture
+  })
+
+//Meshes
+const objectDistance = 4
+const mesh1 = new THREE.Mesh(
+  new THREE.TorusGeometry(1, 0.4, 16, 20),
+  material
+)
+const mesh2 = new THREE.Mesh(
+  new THREE.ConeGeometry(1, 2, 32),
+  material
+)
+const mesh3 = new THREE.Mesh(
+  new THREE.TorusKnotGeometry(0.8, 0.35, 100, 16),
+  material
+)
+mesh1.position.y = - objectDistance * 0
+mesh2.position.y = - objectDistance * 1
+mesh3.position.y = - objectDistance * 2
+
+mesh1.position.x = 2
+mesh2.position.x = - 2
+mesh3.position.x = 2
+
+scene.add(mesh1, mesh2, mesh3)
+
+const sectionMeshes = [mesh1, mesh2, mesh3]
 
 /**
  * Particles
  */
-
-// const particleGeometry = new THREE.SphereGeometry(1, 32, 32)
-const particleGeometry = new THREE.BufferGeometry()
-const count = 5000
-
-const positions = new Float32Array(count * 3)
-const colors = new Float32Array(count * 3)
-for(let i = 0; i<count * 3; i++){
-    positions[i] = (Math.random() - 0.5) * 10
-    colors[i] = Math.random()
+const particlesCount = 200
+const positions = new Float32Array(particlesCount * 3)
+for(let i = 0; i < particlesCount; i++){
+  positions[i * 3 + 0] = (Math.random() - 0.5) * 10
+  positions[i * 3 + 1] = objectDistance * 0.5 - Math.random() * objectDistance * sectionMeshes.length
+  positions[i * 3 + 2] = (Math.random() - 0.5) * 10
 }
+const particleGeometry = new THREE.BufferGeometry()
 particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-
+//Material
 const particleMaterial = new THREE.PointsMaterial({
-    size: 0.1,
-    sizeAttenuation: true, //create perspective from camera
-    color: '#ffff00'
+  color: parameters.materialColor,
+  sizeAttenuation: true,
+  size: 0.03
 })
-
-particleMaterial.transparent = true
-particleMaterial.alphaMap = particleTexture
-//alphaTest: material wont be rendered if the opacity is lower than this value.
-// particleMaterial.alphaTest = 0.001
-// particleMaterial.depthTest = false
-particleMaterial.depthWrite = false
-particleMaterial.blending = THREE.AdditiveBlending
-//vertex coloring is used???
-particleMaterial.vertexColors = true
-
 const particles = new THREE.Points(particleGeometry, particleMaterial)
 scene.add(particles)
 
-//cube
-// const cube = new THREE.Mesh(
-//     new THREE.BoxGeometry(),
-//     new THREE.MeshBasicMaterial()
-// )
-// scene.add(cube)
-
-
+/**
+ * lights
+ */
+const directionalLight = new THREE.DirectionalLight('#ffffff', 1)
+directionalLight.position.set(1, 1, 0)
+scene.add(directionalLight)
 /**
  * Sizes
  */
@@ -93,44 +124,71 @@ window.addEventListener('resize', () =>
  * Camera
  */
 // Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.z = 10
-scene.add(camera)
-
-// Controls
-const controls = new OrbitControls(camera, canvas)
-controls.enableDamping = true
+const cameraGroup = new THREE.Group()
+scene.add(cameraGroup)
+const camera = new THREE.PerspectiveCamera(35, sizes.width / sizes.height, 0.1, 100)
+camera.position.z = 6
+cameraGroup.add(camera)
 
 /**
  * Renderer
  */
 const renderer = new THREE.WebGLRenderer({
-    canvas: canvas
+    canvas: canvas,
+    alpha: true
 })
 renderer.outputColorSpace = THREE.LinearSRGBColorSpace
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 /**
+ * Scroll
+ */
+let scrollY = window.scrollY
+
+window.addEventListener('scroll', () =>
+{
+  scrollY = window.scrollY
+
+})
+
+/**
+ * Cursor
+ */
+const cursor = {}
+cursor.x = 0
+cursor.y = 0
+window.addEventListener('mousemove', (event) =>{
+  cursor.x = event.clientX / sizes.width - 0.5
+  cursor.y = event.clientY / sizes.height - 0.5
+
+})
+
+/**
  * Animate
  */
 const clock = new THREE.Clock()
+let prevTime = 0
 
 const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
+    const deltaTime = elapsedTime - prevTime
+    prevTime = elapsedTime
 
-    //Update particles
-    // particles.rotation.y = elapsedTime * 0.1
-    // not the best solution to animate
-    for(let i = 0; i < count; i++){
-        const i3 = i * 3
-        const x = particleGeometry.attributes.position.array[i3]
-        particleGeometry.attributes.position.array[i3 + 1] = Math.sin(elapsedTime + x) *2
+    //Animate Camera
+    camera.position.y = -scrollY / sizes.height * objectDistance
+
+    const parallaxX = cursor.x
+    const parallaxY = - cursor.y
+    cameraGroup.position.x += (parallaxX - cameraGroup.position.x) * deltaTime * 2
+    cameraGroup.position.y += (parallaxY - cameraGroup.position.y) * deltaTime * 2
+
+    //update meshes
+    for(const mesh of sectionMeshes){
+      mesh.rotation.x = elapsedTime * 0.05
+      mesh.rotation.y = elapsedTime * 0.04
     }
-    particleGeometry.attributes.position.needsUpdate = true
-    // Update controls
-    controls.update()
 
     // Render
     renderer.render(scene, camera)
