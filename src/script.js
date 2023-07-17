@@ -7,11 +7,13 @@ THREE.ColorManagement.enabled = false
 /**
  * Debug
  */
+
 const gui = new dat.GUI()
 
 const parameters = {
     materialColor: '#ffeded'
 }
+
 
 gui
     .addColor(parameters, 'materialColor')
@@ -31,9 +33,9 @@ gradientTexture.magFilter = THREE.NearestFilter
  */
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
-
 // Scene
 const scene = new THREE.Scene()
+
 
 /**
  * Objects
@@ -71,9 +73,11 @@ scene.add(mesh1, mesh2, mesh3)
 
 const sectionMeshes = [mesh1, mesh2, mesh3]
 
+
 /**
- * Particles
+ * Galaxy
  */
+
 const particlesCount = 200
 const positions = new Float32Array(particlesCount * 3)
 for(let i = 0; i < particlesCount; i++){
@@ -98,6 +102,7 @@ scene.add(particles)
 const directionalLight = new THREE.DirectionalLight('#ffffff', 1)
 directionalLight.position.set(1, 1, 0)
 scene.add(directionalLight)
+
 /**
  * Sizes
  */
