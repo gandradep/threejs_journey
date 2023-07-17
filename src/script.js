@@ -1,6 +1,9 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import GUI from 'lil-gui'
+import CANNON from 'cannon'
+
+console.log(CANNON);
 
 THREE.ColorManagement.enabled = false
 
