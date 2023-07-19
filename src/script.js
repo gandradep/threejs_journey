@@ -16,9 +16,9 @@ debugObject.createSphere = () =>
   createSphere(
     Math.random() * 0.5,
     {
-      x: Math.random() - 0.5 * 3,
+      x: (Math.random() - 0.5) * 3,
       y: 3,
-      z: Math.random() - 0.5 * 3
+      z: (Math.random() - 0.5) * 3
     })
 }
 debugObject.createBox = () =>
@@ -28,9 +28,9 @@ debugObject.createBox = () =>
     Math.random(),
     Math.random(),
     {
-      x: Math.random() - 0.5 * 3,
+      x: (Math.random() - 0.5) * 3,
       y: 3,
-      z: Math.random() - 0.5 * 3
+      z: (Math.random() - 0.5) * 3
     })
 }
 gui.add(debugObject, 'createSphere')
@@ -44,6 +44,19 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
+
+/**
+ * Sound
+ */
+const hitSound = new Audio('/sounds/hit.mp3')
+const playHitSound = (collision) => {
+  const impactStrenght = collision.contact.getImpactVelocityAlongNormal();
+  if(impactStrenght > 1.5) {
+    hitSound.volume = Math.random()
+    hitSound.currentTime = 0
+    hitSound.play()
+  }
+}
 
 /**
  * Textures
@@ -204,6 +217,8 @@ const createSphere = (radius, position) => {
     material: defaultMaterial
   })
   body.position.copy(position)
+  body.addEventListener('collide', playHitSound)
+
   world.addBody(body)
 
   //Save in objects to update
@@ -239,6 +254,7 @@ const createBox = (width, height, depth, position) => {
     material: defaultMaterial
   })
   body.position.copy(position)
+  body.addEventListener('collide', playHitSound)
   world.addBody(body)
 
   //Save in objects to update
