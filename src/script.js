@@ -53,9 +53,14 @@ gui.add(debugObject, 'reset')
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
-// Scene
-const scene = new THREE.Scene()
 
+gui
+    .addColor(parameters, 'materialColor')
+    .onChange(() =>
+    {
+      material.color.set(parameters.materialColor)
+      particleMaterial.color.set(parameters.materialColor)
+    })
 /**
  * Sound
  */
@@ -191,7 +196,8 @@ controls.enableDamping = true
  * Renderer
  */
 const renderer = new THREE.WebGLRenderer({
-    canvas: canvas
+    canvas: canvas,
+    alpha: true
 })
 renderer.outputColorSpace = THREE.LinearSRGBColorSpace
 renderer.shadowMap.enabled = true
@@ -274,6 +280,44 @@ const createBox = (width, height, depth, position) => {
     body
   })
 }
+
+/**
+ * Scroll
+ */
+let scrollY = window.scrollY
+let currentSection = 0
+window.addEventListener('scroll', () =>
+{
+  scrollY = window.scrollY
+
+  const newSection = Math.round(scrollY / sizes.height)
+
+  if (newSection !== currentSection) {
+    currentSection = newSection
+    gsap.to(
+      sectionMeshes[currentSection].rotation,
+      {
+        duration: 1.5,
+        ease: 'power2.inOut',
+        x: '+=6',
+        y: '+=3'
+      }
+    )
+  }
+
+})
+
+/**
+ * Cursor
+ */
+const cursor = {}
+cursor.x = 0
+cursor.y = 0
+window.addEventListener('mousemove', (event) =>{
+  cursor.x = event.clientX / sizes.width - 0.5
+  cursor.y = event.clientY / sizes.height - 0.5
+
+})
 
 /**
  * Animate
