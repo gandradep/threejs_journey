@@ -90,12 +90,12 @@ const textureLoader = new THREE.TextureLoader()
 const cubeTextureLoader = new THREE.CubeTextureLoader()
 
 const environmentMapTexture = cubeTextureLoader.load([
-    '/textures/environmentMaps/0/px.png',
-    '/textures/environmentMaps/0/nx.png',
-    '/textures/environmentMaps/0/py.png',
-    '/textures/environmentMaps/0/ny.png',
-    '/textures/environmentMaps/0/pz.png',
-    '/textures/environmentMaps/0/nz.png'
+    '/textures/environmentMaps/2/px.png',
+    '/textures/environmentMaps/2/nx.png',
+    '/textures/environmentMaps/2/py.png',
+    '/textures/environmentMaps/2/ny.png',
+    '/textures/environmentMaps/2/pz.png',
+    '/textures/environmentMaps/2/nz.png'
 ])
 
 /**
@@ -140,6 +140,8 @@ const objectMaterial = new THREE.MeshStandardMaterial({
     envMapIntensity: 0.5
 })
 
+gui.add(objectMaterial, 'roughness').min(0).max(1)
+gui.add(objectMaterial, 'metalness').min(0).max(1)
 const createSphere = (radius, position) =>
 {
     // Three.js mesh
