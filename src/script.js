@@ -211,15 +211,16 @@ const objectsToUpdate = []
 
 //Sphere
 const sphereGeometry = new THREE.SphereGeometry(1, 20, 20)
-const sphereMaterial = new THREE.MeshStandardMaterial({
+const objectMaterial = new THREE.MeshStandardMaterial({
   metalness: 0.3,
   roughness: 0.4,
   envMap: environmentMapTexture
 })
-
+gui.add(objectMaterial, 'roughness').min(0).max(1)
+gui.add(objectMaterial, 'metalness').min(0).max(1)
 const createSphere = (radius, position) => {
   //Three.js mesh
-  const mesh = new THREE.Mesh( sphereGeometry, sphereMaterial)
+  const mesh = new THREE.Mesh( sphereGeometry, objectMaterial)
   mesh.castShadow = true
   mesh.scale.set(radius, radius, radius)
   mesh.position.copy(position)
@@ -244,19 +245,14 @@ const createSphere = (radius, position) => {
     body
   })
 }
-createSphere(0.5, {x: 0, y: 3, z: 0})
+
 
 //Box
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
-const boxMaterial = new THREE.MeshStandardMaterial({
-  metalness: 0.3,
-  roughness: 0.4,
-  envMap: environmentMapTexture
-})
 
 const createBox = (width, height, depth, position) => {
   //Three.js mesh
-  const mesh = new THREE.Mesh( boxGeometry, boxMaterial)
+  const mesh = new THREE.Mesh( boxGeometry, objectMaterial)
   mesh.castShadow = true
   mesh.scale.set(width, height, depth)
   mesh.position.copy(position)
