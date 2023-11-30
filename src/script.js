@@ -8,7 +8,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
  * Loaders
  */
 const gltfLoader = new GLTFLoader();
-console.log(gltfLoader);
+const cubeTextureLoader = new THREE.CubeTextureLoader();
 /**
  * Base
  */
@@ -20,6 +20,18 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
+/**
+ * Environment map
+ */
+const envrionmentMap = cubeTextureLoader.load([
+    'environmentMaps/0/px.png',
+    'environmentMaps/0/nx.png',
+    'environmentMaps/0/py.png',
+    'environmentMaps/0/ny.png',
+    'environmentMaps/0/pz.png',
+    'environmentMaps/0/nz.png',
+])
+scene.background = envrionmentMap
 
 /**
  * Torus Knot
@@ -28,6 +40,7 @@ const torusKnot = new THREE.Mesh(
     new THREE.TorusKnotGeometry(1, 0.4, 100, 16),
     new THREE.MeshBasicMaterial()
 )
+torusKnot.position.x = -4
 torusKnot.position.y = 4
 scene.add(torusKnot)
 /**
@@ -36,6 +49,7 @@ scene.add(torusKnot)
 gltfLoader.load(
     '/models/FlightHelmet/glTF/FlightHelmet.gltf',
     (gltf) => {
+        gltf.scene.scale.set(10, 10, 10)
         scene.add(gltf.scene)
     }
 )
