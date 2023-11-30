@@ -120,7 +120,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 const gltfLoader = new GLTFLoader();
 let model = null;
 gltfLoader.load(
-    './models/Duck/glTF-Binary/Duck.glb',
+    './models/hamburger.glb',
     (gltf) => {
         model = gltf.scene;
         model.position.y = -1.2
