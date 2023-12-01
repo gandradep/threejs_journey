@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import GUI from 'lil-gui'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
+import { GroundProjectedEnv } from 'three/examples/jsm/objects/GroundProjectedEnv.js'
 
 
 /**
@@ -10,6 +11,7 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
  */
 const gltfLoader = new GLTFLoader();
 const rgbeLoader = new RGBELoader();
+const textureLoader = new THREE.TextureLoader()
 
 const cubeTextureLoader = new THREE.CubeTextureLoader();
 /**
@@ -63,17 +65,69 @@ gui
 // scene.background = envrionmentMap
 
 //HDR (RGBE) equirectangular
-rgbeLoader.load('/environmentMaps/blender-2k.hdr', (envMap) => {
-    envMap.mapping = THREE.EquirectangularRefractionMapping
-    scene.environment = envMap
-    // scene.background = envMap
-})
+// rgbeLoader.load('/environmentMaps/blender-2k.hdr', (envMap) => {
+//     envMap.mapping = THREE.EquirectangularRefractionMapping
+//     scene.environment = envMap
+//     scene.background = envMap
+// })
+
+//LDR equirectangular
+// const envrionmentMap = textureLoader.load('/environmentMaps/office.jpg')
+// envrionmentMap.mapping = THREE.EquirectangularRefractionMapping
+// envrionmentMap.colorSpace = THREE.SRGBColorSpace
+// scene.background = envrionmentMap
+// scene.environment = envrionmentMap
+
+//Ground projected
+// rgbeLoader.load('environmentMaps/1/2k.hdr', (envrionmentMap) => {
+//     envrionmentMap.mapping = THREE.EquirectangularRefractionMapping
+//     scene.environment = envrionmentMap
+
+//     const skybox = new GroundProjectedEnv(envrionmentMap)
+//     skybox.radius = 9.2
+//     skybox.height = 4.3
+//     skybox.scale.setScalar(50);
+//     scene.add(skybox)
+
+//     gui.add(skybox, 'radius', 1, 200, 0.1).name('skyboxRadius')
+//     gui.add(skybox, 'height', 1, 200, 0.1).name('skyboxHeight')
+// })
+
+/**
+ * Real time environment map
+ */
+const envrionmentMap = textureLoader.load('/environmentMaps/office.jpg')
+envrionmentMap.mapping = THREE.EquirectangularRefractionMapping
+envrionmentMap.colorSpace = THREE.SRGBColorSpace
+scene.background = envrionmentMap
+
+//holy Donut
+const holydonut = new THREE.Mesh(
+    new THREE.TorusGeometry(8, 0.5),
+    new THREE.MeshBasicMaterial({color: new THREE.Color(10, 4, 2)})
+)
+holydonut.layers.enable(1)
+holydonut.position.y = 3.5
+scene.add(holydonut)
+
+//Cube render target
+const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(
+    256,
+    {
+        type: THREE.HalfFloatType
+     }
+)
+scene.environment = cubeRenderTarget.texture
+//Cube Camera
+
+const cubeCamera = new THREE.CubeCamera(0.1, 100, cubeRenderTarget)
+cubeCamera.layers.set(1)
 /**
  * Torus Knot
  */
 const torusKnot = new THREE.Mesh(
     new THREE.TorusKnotGeometry(1, 0.4, 100, 16),
-    new THREE.MeshStandardMaterial({ roughness: 0.3, metalness: 1, color: 0xaaaaaa })
+    new THREE.MeshStandardMaterial({ roughness: 0, metalness: 1, color: 0xaaaaaa })
 )
 
 torusKnot.position.x = -4
@@ -144,6 +198,12 @@ const tick = () =>
 {
     // Time
     const elapsedTime = clock.getElapsedTime()
+
+    //holy
+    if(holydonut) {
+        holydonut.rotation.x = Math.sin(elapsedTime)
+        cubeCamera.update(renderer, scene)
+    }
 
     // Update controls
     controls.update()
