@@ -34,6 +34,8 @@ const updateAllMaterials = () => {
         if(child.isMesh && child.material.isMeshStandardMaterial) {
 
             child.material.envMapIntensity = global.envMapIntensity;
+            child.castShadow = true
+            child.receiveShadow = true
         }
     })
 }
@@ -45,7 +47,7 @@ scene.backgroundIntensity = 1
 
 gui.add(scene, 'backgroundBlurriness').min(0).max(2).step(0.001)
 gui.add(scene, 'backgroundIntensity').min(0).max(10).step(0.001)
-global.envMapIntensity = 1
+global.envMapIntensity = 2
 gui
     .add(global, 'envMapIntensity')
     .min(0)
@@ -64,87 +66,109 @@ gui
 // scene.environment = envrionmentMap
 // scene.background = envrionmentMap
 
-//HDR (RGBE) equirectangular
-// rgbeLoader.load('/environmentMaps/blender-2k.hdr', (envMap) => {
-//     envMap.mapping = THREE.EquirectangularRefractionMapping
-//     scene.environment = envMap
-//     scene.background = envMap
-// })
-
-//LDR equirectangular
-// const envrionmentMap = textureLoader.load('/environmentMaps/office.jpg')
-// envrionmentMap.mapping = THREE.EquirectangularRefractionMapping
-// envrionmentMap.colorSpace = THREE.SRGBColorSpace
-// scene.background = envrionmentMap
-// scene.environment = envrionmentMap
-
-//Ground projected
-// rgbeLoader.load('environmentMaps/1/2k.hdr', (envrionmentMap) => {
-//     envrionmentMap.mapping = THREE.EquirectangularRefractionMapping
-//     scene.environment = envrionmentMap
-
-//     const skybox = new GroundProjectedEnv(envrionmentMap)
-//     skybox.radius = 9.2
-//     skybox.height = 4.3
-//     skybox.scale.setScalar(50);
-//     scene.add(skybox)
-
-//     gui.add(skybox, 'radius', 1, 200, 0.1).name('skyboxRadius')
-//     gui.add(skybox, 'height', 1, 200, 0.1).name('skyboxHeight')
-// })
+// HDR (RGBE) equirectangular
+rgbeLoader.load('/environmentMaps/0/2k.hdr', (envMap) => {
+    envMap.mapping = THREE.EquirectangularRefractionMapping
+    scene.environment = envMap
+    scene.background = envMap
+})
 
 /**
- * Real time environment map
+ * Directional light to cast shadow
  */
-const envrionmentMap = textureLoader.load('/environmentMaps/office.jpg')
-envrionmentMap.mapping = THREE.EquirectangularRefractionMapping
-envrionmentMap.colorSpace = THREE.SRGBColorSpace
-scene.background = envrionmentMap
+const directionalLight = new THREE.DirectionalLight('#ffffff', 1)
+directionalLight.position.set(-4, 6.5, 2.5)
+scene.add(directionalLight)
 
-//holy Donut
-const holydonut = new THREE.Mesh(
-    new THREE.TorusGeometry(8, 0.5),
-    new THREE.MeshBasicMaterial({color: new THREE.Color(10, 4, 2)})
-)
-holydonut.layers.enable(1)
-holydonut.position.y = 3.5
-scene.add(holydonut)
+gui.add(directionalLight, 'intensity', 0, 10, 0.001,).name('light intensity')
+gui.add(directionalLight.position, 'x', -10, 10, 0.001,).name('LightX')
+gui.add(directionalLight.position, 'y', -10, 10, 0.001,).name('LightY')
+gui.add(directionalLight.position, 'z', -10, 10, 0.001,).name('LightZ')
 
-//Cube render target
-const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(
-    256,
-    {
-        type: THREE.HalfFloatType
-     }
-)
-scene.environment = cubeRenderTarget.texture
-//Cube Camera
+//Shadows
+directionalLight.castShadow = true
+directionalLight.shadow.camera.far = 15
+//lower resolution, flatter shadows
+directionalLight.shadow.mapSize.set(1024, 1024)
+directionalLight.shadow.normalBias = 0.027
+directionalLight.shadow.bias = -0.004
+gui.add(directionalLight, 'castShadow')
+gui.add(directionalLight.shadow, 'normalBias').min(-0.05).max(0.05).step(0.001)
+gui.add(directionalLight.shadow, 'bias').min(-0.05).max(0.05).step(0.001)
 
-const cubeCamera = new THREE.CubeCamera(0.1, 100, cubeRenderTarget)
-cubeCamera.layers.set(1)
-/**
- * Torus Knot
- */
-const torusKnot = new THREE.Mesh(
-    new THREE.TorusKnotGeometry(1, 0.4, 100, 16),
-    new THREE.MeshStandardMaterial({ roughness: 0, metalness: 1, color: 0xaaaaaa })
-)
+//camera helper
+// const directionalLightHelper = new THREE.CameraHelper(directionalLight.shadow.camera)
+// scene.add(directionalLightHelper)
 
-torusKnot.position.x = -4
-torusKnot.position.y = 4
-scene.add(torusKnot)
+//Target
+directionalLight.target.position.set(0, 4, 0)
+directionalLight.target.updateWorldMatrix()
 /**
  * Models
  */
+// gltfLoader.load(
+//     '/models/FlightHelmet/glTF/FlightHelmet.gltf',
+//     (gltf) => {
+//         gltf.scene.scale.set(10, 10, 10)
+//         scene.add(gltf.scene)
+
+//         updateAllMaterials();
+//     }
+// )
+//hamburger
 gltfLoader.load(
-    '/models/FlightHelmet/glTF/FlightHelmet.gltf',
+    '/models/hamburger.glb',
     (gltf) => {
-        gltf.scene.scale.set(10, 10, 10)
+        gltf.scene.scale.set(0.4, 0.4, 0.4)
+        gltf.scene.position.set(0, 2.5, 0)
         scene.add(gltf.scene)
 
         updateAllMaterials();
     }
 )
+
+/**
+ * floor
+ */
+const floorColorTexture = textureLoader.load('/textures/wood_cabinet_worn_long/wood_cabinet_worn_long_diff_1k.jpg')
+const floorNormalTexture = textureLoader.load('/textures/wood_cabinet_worn_long/wood_cabinet_worn_long_nor_gl_1k.png')
+const floorAOMetalRoughnessTexture = textureLoader.load('/textures/wood_cabinet_worn_long/wood_cabinet_worn_long_arm_1k.jpg')
+
+floorColorTexture.colorSpace = THREE.SRGBColorSpace
+const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(8,8),
+    new THREE.MeshStandardMaterial({
+        map: floorColorTexture,
+        normalMap: floorNormalTexture,
+        aoMap: floorAOMetalRoughnessTexture,
+        roughness: floorAOMetalRoughnessTexture,
+        metalnessMap: floorAOMetalRoughnessTexture
+    })
+)
+floor.rotation.x = - Math.PI * 0.5
+scene.add(floor)
+
+/**
+ * Wall
+ */
+const wallColorTexture = textureLoader.load('/textures/castle_brick_broken_06/castle_brick_broken_06_diff_1k.jpg')
+const wallNormalTexture = textureLoader.load('/textures/castle_brick_broken_06/castle_brick_broken_06_nor_gl_1k.png')
+const wallAOMetalRoughnessTexture = textureLoader.load('/textures/castle_brick_broken_06/castle_brick_broken_06_arm_1k.jpg')
+
+wallColorTexture.colorSpace = THREE.SRGBColorSpace
+
+const wall = new THREE.Mesh(
+    new THREE.PlaneGeometry(8,8),
+    new THREE.MeshStandardMaterial({
+        map: wallColorTexture,
+        normalMap: wallNormalTexture,
+        aoMap: wallAOMetalRoughnessTexture,
+        roughness: wallAOMetalRoughnessTexture,
+        metalnessMap: wallAOMetalRoughnessTexture
+    })
+)
+wall.position.set(0, 4, -4)
+scene.add(wall)
 /**
  * Sizes
  */
@@ -185,11 +209,28 @@ controls.enableDamping = true
  * Renderer
  */
 const renderer = new THREE.WebGLRenderer({
-    canvas: canvas
+    canvas: canvas,
+    antialias: true
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
+//Tone mapping
+renderer.toneMapping = THREE.ReinhardToneMapping
+renderer.toneMappingExposure = 3
+gui.add(renderer,'toneMapping', {
+    No: THREE.NoToneMapping,
+    Linear: THREE.LinearToneMapping,
+    Reinhard: THREE.ReinhardToneMapping,
+    Cineon: THREE.CineonToneMapping,
+    ACESFilmic: THREE.ACESFilmicToneMapping
+})
+
+gui.add(renderer, 'toneMappingExposure').min(0).max(10).step(0.001)
+
+//Shadows
+renderer.shadowMap.enabled = true
+renderer.shadowMap.type = THREE.PCFSoftShadowMap
 /**
  * Animate
  */
@@ -199,11 +240,7 @@ const tick = () =>
     // Time
     const elapsedTime = clock.getElapsedTime()
 
-    //holy
-    if(holydonut) {
-        holydonut.rotation.x = Math.sin(elapsedTime)
-        cubeCamera.update(renderer, scene)
-    }
+
 
     // Update controls
     controls.update()
